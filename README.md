@@ -1,7 +1,6 @@
 # Inferring Alcohol Consumption from Liver Disease Biomarkers
 
-> *Abstract:*  
-> This is the abstract
+> Recognizing alcohol consumption as the primary cause of liver disease can help improve outcomes and longevity of otherwise healthy patients. Providing resources to patients in order to address heavy alcohol use in early stages of hepatotoxicity is key to reversing damage and preventing mortality. Because some patients may not truthfully volunteer their alcohol intake and because liver disease has many causes, a reliable test to distinguish moderate vs. heavy alcohol use is needed. The purpose of this project was to assess if heavy alcohol usage can be predicted from serum liver function tests and if so, which tests are most important in classifying alcohol intake. BUPA Liver Disorder dataset which contains 345 samples of liver function tests: MCV, ALP, AST, ALT, GGT and a count of daily half-pint drinks consumed was used to distinguish moderate and heavy drinkers. Using logistic regression without regularization, the model distinguished moderate vs. heavy drinkers the best when moderate drinking was defined as 2 drinks or fewer and resulted in 64% balanced accuracy score (55% sensitivity and 72% specificity). Increase in GGT was the best predictor of heavy alcohol, followed by increase in MCV, AST, and AST-ALT ratio. ALP was a negative predictor of alcohol use, all other things considered. While the methodology of this project can be used to develop an improved model, the actual results should not be utilized in clinical or personal settings since data collection has limitations preventing the model from generalizing to the wide population. 
 
 ## Motivation
 
@@ -14,10 +13,6 @@ At the same time, not only is alcohol-related liver disease is preventable, in i
 *Stages of liver disease. Image sourced from [British Liver Trust](https://britishlivertrust.org.uk/information-and-support/liver-health-2/stages-of-liver-disease/).*
 
 Liver performs several key functions in a mammal body. This organ is responsible for filtration and storage of blood, metabolizing proteins into amino acids, and forming bile. Excess amino acids in the body are sent to the liver for processing and metabolism, where liver releases amonia (which will turn into uric acid), glutamate, glutamine, aspartate. 
-
-![Liver functions, image sourced from the British Liver Trust](https://britishlivertrust.org.uk/wp-content/uploads/AdobeStock_94365261-Converted-1024x951.png)
-
-*Liver fuctions. Image sourced from [British Liver Trust](https://britishlivertrust.org.uk/information-and-support/liver-health-2/stages-of-liver-disease/).*
 
 While patients may choose to not disclose their alcohol consumption levels to the attending phisician, inferring consumption from liver disease biomarkers could provide insights to the medical staff and allow them to deliver necessary counceling and resources to the patient. Especially, detecing alcohol-induced liver damage has the potential to save lives. 
 
@@ -49,11 +44,48 @@ A human body is not an islated system so it is likely that some of our feautres 
 
 ## Methods
 
+Findings from Exploratory Data Analysis (EDA):
+* Drinks variable has a power-law-like or log-like distribution with most values concentrated closer to 0 and a longer tail but its variance is much higher than its mean.
+* Drinks has integer values except one decimal at 0.5
+* 5 predictors have mostly normal or log-normal distributions
+* AST and ALT liver test results have 0.7 Pearson correlation which could negatively impact a generalized linear model of our choice
+* There were several poinst of high leverage in the dataset
 
+![Distribution of features](./images/feature_distribution.png)
+
+Due to high correlation between AST and ALT, AST-ALT ratio was added to features and ALT was removed. 
+
+Dataset was split into a training and validation dataset with 80-20 ratio and standard scaler was implemented within the model pipeline. 
+
+Given the task of predicting alcohol consumption from results of liver function tests and identifying which tests play an important role in the prediction, a generalized linear model was chosen for the task because it is able to produce interpretable feature coefficients and the model can be used easily in clinical settings. While Poisson and Gamma regressions assumptions would be violated, a linear regression or logistic regression were  evaluated. Linear Regression performed mediocre on the training dataset and did not generalize to the validation dataset at all. Therefore, a decision was made to proceed with Logistic Regression.
+
+Since Logistic Regression works on classification tasks, it was necessary to convert drinks to a binary variable segmenting moderate drinkers and heavy drinkers using an upper threshold $k$ (s.t. $\text{drinks}>k$ indicates heavy consumption). 
+
+Since threshold $k$ is not known, a model was fit to a variety of different thresholds, spanning possible values found in the dataset and $k$ was selected to optimize sensitivity and specificity. Values between 1 and 2.5 yielded a model where both metrics performed better than a random guess. $k=2$ was selected because it is a whole number which maximized both metrics simultaneously. Incidentally, it is also a CDC recommended upper limit of daily alcohol intake deemed as moderate consumption for men. 
+
+![Logistic model results](./images/logistic_results.png)
+
+Defining moderate consumption as 0-2 drinks per day and heavy consumption as >2 drinks per day produced balanced accuracy score of almost 64% with sensitivity of 55% and specificity of 72%. These results seem fairly good, given the limitations of the data. 
 
 ## Results
 
-## Code
+First, a logistic model has the optimal ability to distinguish moderate vs. heavy drinkers when heavy drinking is defined as consuming > 2 drinks per day. 
+
+Second, MCV, AST, GGT, and AST-ALT ratio are positive indicators of heavy drinking. A standard unit increase in GGT indicates a 60% higher chance of being a heavy drinker. MCV was a good predictor as well, responsible to 40% chance of heavy drinker label. AST and AST-to-ALT ratio contributed to about 30%. 
+
+Finally, all other factors being equal, ALP was the only negative predictor of heavy drinking - one standard unit increase in ALP means a ~25% decrease in chance that a patient is a heavy drinker, accounting for results of other tests. If the data and the model are correct, this could indicate that an increase in serum alkaline phosphatase is not induced by alcohol liver damage per se but due to other aspects of AST pathophysiology. 
+
+![Model Coefficients](./images/model_coefficients.png)
+
+Since this project is using data that was not collected by the author, a lot of information about it remains unknown, which leads to numerous limitations. Primarily, since it is uknown how the data was collected, **the results of this project should not be used to make real-life inferences**. Further sampling would be necessary to understand the actual relationship between liver function tests and alcohol consumption.
 
 ## Requirements
+
+pandas == 2.2.3
+numpy == 1.26.4
+matplotlib == 3.10.0
+seaborn == 0.13.2
+scienceplots
+statsmodels == 0.14.4
+sklearn == 1.6.1
 
